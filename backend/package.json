@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "dev": "node server.js",
+     "build": "echo 'No build step needed for the backend'"
   },
   "author": "shahzaibnahk",
   "license": "ISC",
