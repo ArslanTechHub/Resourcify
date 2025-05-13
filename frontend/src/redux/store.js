@@ -5,7 +5,7 @@ import { labReducer } from "./reducers/labReducer";
 import { otherReducer } from "./reducers/otherReducer";
 import { roomReducer } from "./reducers/roomReducer";
 
-export const server = "https://resourcify-1.onrender.com";
+export const server = "https://resourcify-1.onrender.com/api/v1";
 // export const server = "http://localhost:4000/api/v1";
 
 const store = configureStore({
