@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaSearch, FaFilter, FaDownload, FaBook, FaComments, FaLaptop, FaCalendarCheck, FaExclamationTriangle } from "react-icons/fa";
+import { FaSearch, FaFilter, FaDownload, FaBook, FaComments, FaLaptop, FaCalendarCheck, FaExclamationTriangle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Sidebar from "./sidebar/Sidebar";
 import Header from "./header/Header";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,6 +21,16 @@ const Dashboard = () => {
   const [searchLab, setSearchLab] = useState("");
   const { user } = useSelector((state) => state.user);
   const [activeTab, setActiveTab] = useState("library");
+
+  // Pagination states for each table
+  const [libraryPage, setLibraryPage] = useState(1);
+  const [libraryEntries, setLibraryEntries] = useState(5);
+
+  const [roomPage, setRoomPage] = useState(1);
+  const [roomEntries, setRoomEntries] = useState(5);
+
+  const [labPage, setLabPage] = useState(1);
+  const [labEntries, setLabEntries] = useState(5);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,6 +105,7 @@ const Dashboard = () => {
       link: item?.item?.link || "",
     })) || [];
 
+  // Filtering
   const filteredLibraryItems = tableDataLibraryItems.filter(
     (item) =>
       item.borrower.toLowerCase().includes(searchLibrary.toLowerCase()) ||
@@ -114,6 +125,12 @@ const Dashboard = () => {
       item.item.toLowerCase().includes(searchLab.toLowerCase()) ||
       item.status.toLowerCase().includes(searchLab.toLowerCase())
   );
+
+  // Pagination helpers
+  const paginate = (data, page, entries) => {
+    const start = (page - 1) * entries;
+    return data.slice(start, start + entries);
+  };
 
   // Dashboard summary stats
   const stats = [
@@ -158,6 +175,56 @@ const Dashboard = () => {
       opacity: 1,
       transition: { duration: 0.4 }
     }
+  };
+
+  // Pagination controls
+  const renderPagination = (page, setPage, entries, setEntries, total, filteredTotal) => {
+    const totalPages = Math.ceil(filteredTotal / entries) || 1;
+    const canPrev = page > 1;
+    const canNext = page < totalPages;
+    const showingFrom = filteredTotal === 0 ? 0 : (page - 1) * entries + 1;
+    const showingTo = Math.min(page * entries, filteredTotal);
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        {/* Left: Pagination numbers */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => canPrev && setPage(page - 1)}
+            disabled={!canPrev}
+            className={`p-2 rounded ${canPrev ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronLeft />
+          </button>
+          <span className="font-medium">{page}</span>
+          <button
+            onClick={() => canNext && setPage(page + 1)}
+            disabled={!canNext}
+            className={`p-2 rounded ${canNext ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+        {/* Right: Showing entries and dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            Showing {showingFrom} to {showingTo} of {filteredTotal} entries
+          </span>
+          <select
+            value={entries}
+            onChange={e => {
+              setEntries(Number(e.target.value));
+              setPage(1);
+            }}
+            className="ml-2 border rounded px-2 py-1 text-sm"
+          >
+            {[5, 10, 20, 50].map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -278,16 +345,16 @@ const Dashboard = () => {
                           type="text"
                           placeholder="Search library items..."
                           value={searchLibrary}
-                          onChange={(e) => setSearchLibrary(e.target.value)}
+                          onChange={(e) => {
+                            setSearchLibrary(e.target.value);
+                            setLibraryPage(1);
+                          }}
                           className="w-64 py-2 pl-10 pr-4 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                         />
                         <FaSearch className="absolute text-gray-400 top-3 left-3" />
                       </div>
                       <button className="flex items-center px-4 py-2 text-sm transition-colors bg-gray-100 rounded-lg hover:bg-gray-200">
                         <FaFilter className="mr-2" /> Filter
-                      </button>
-                      <button className="flex items-center px-4 py-2 text-sm text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
-                        <FaDownload className="mr-2" /> Export
                       </button>
                     </div>
                   </div>
@@ -299,15 +366,14 @@ const Dashboard = () => {
                           <th className="px-4 py-3 font-medium text-left">Borrower</th>
                           <th className="px-4 py-3 font-medium text-left">Role</th>
                           <th className="px-4 py-3 font-medium text-left">Email</th>
-                          <th className="px-4 py-3 font-medium text-left">Phone</th>
                           <th className="px-4 py-3 font-medium text-left">Item</th>
                           <th className="px-4 py-3 font-medium text-left">Start Date</th>
                           <th className="px-4 py-3 font-medium text-left">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {filteredLibraryItems.length > 0 ? (
-                          filteredLibraryItems.map((row, index) => (
+                        {paginate(filteredLibraryItems, libraryPage, libraryEntries).length > 0 ? (
+                          paginate(filteredLibraryItems, libraryPage, libraryEntries).map((row, index) => (
                             <tr 
                               key={index} 
                               className="transition-colors hover:bg-gray-50"
@@ -316,7 +382,6 @@ const Dashboard = () => {
                               <td className="px-4 py-3 text-sm font-medium">{row.borrower}</td>
                               <td className="px-4 py-3 text-sm capitalize">{row.role}</td>
                               <td className="px-4 py-3 text-sm">{row.email}</td>
-                              <td className="px-4 py-3 text-sm">{row.phone}</td>
                               <td className="px-4 py-3 text-sm">{row.item}</td>
                               <td className="px-4 py-3 text-sm">{row.startDate}</td>
                               <td className="px-4 py-3 text-sm">
@@ -334,6 +399,14 @@ const Dashboard = () => {
                       </tbody>
                     </table>
                   </div>
+                  {renderPagination(
+                    libraryPage,
+                    setLibraryPage,
+                    libraryEntries,
+                    setLibraryEntries,
+                    tableDataLibraryItems.length,
+                    filteredLibraryItems.length
+                  )}
                 </motion.div>
               )}
 
@@ -355,7 +428,10 @@ const Dashboard = () => {
                           type="text"
                           placeholder="Search room bookings..."
                           value={searchRoomBookings}
-                          onChange={(e) => setSearchRoomBookings(e.target.value)}
+                          onChange={(e) => {
+                            setSearchRoomBookings(e.target.value);
+                            setRoomPage(1);
+                          }}
                           className="w-64 py-2 pl-10 pr-4 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                         />
                         <FaSearch className="absolute text-gray-400 top-3 left-3" />
@@ -373,8 +449,8 @@ const Dashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {filteredRoomBookings.length > 0 ? (
-                          filteredRoomBookings.map((row, index) => (
+                        {paginate(filteredRoomBookings, roomPage, roomEntries).length > 0 ? (
+                          paginate(filteredRoomBookings, roomPage, roomEntries).map((row, index) => (
                             <tr 
                               key={index} 
                               className="transition-colors hover:bg-gray-50"
@@ -397,6 +473,14 @@ const Dashboard = () => {
                       </tbody>
                     </table>
                   </div>
+                  {renderPagination(
+                    roomPage,
+                    setRoomPage,
+                    roomEntries,
+                    setRoomEntries,
+                    tableDataRoomBookings.length,
+                    filteredRoomBookings.length
+                  )}
                 </motion.div>
               )}
 
@@ -418,7 +502,10 @@ const Dashboard = () => {
                           type="text"
                           placeholder="Search lab resources..."
                           value={searchLab}
-                          onChange={(e) => setSearchLab(e.target.value)}
+                          onChange={(e) => {
+                            setSearchLab(e.target.value);
+                            setLabPage(1);
+                          }}
                           className="w-64 py-2 pl-10 pr-4 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                         />
                         <FaSearch className="absolute text-gray-400 top-3 left-3" />
@@ -440,8 +527,8 @@ const Dashboard = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {filteredLabResources.length > 0 ? (
-                          filteredLabResources.map((row, index) => (
+                        {paginate(filteredLabResources, labPage, labEntries).length > 0 ? (
+                          paginate(filteredLabResources, labPage, labEntries).map((row, index) => (
                             <tr 
                               key={index} 
                               className="transition-colors hover:bg-gray-50"
@@ -490,6 +577,14 @@ const Dashboard = () => {
                       </tbody>
                     </table>
                   </div>
+                  {renderPagination(
+                    labPage,
+                    setLabPage,
+                    labEntries,
+                    setLabEntries,
+                    tableDataLabResources.length,
+                    filteredLabResources.length
+                  )}
                 </motion.div>
               )}
             </>

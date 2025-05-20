@@ -9,6 +9,10 @@ import Loading from "../other/Loading";
 import { useAlert } from "../../utils/alert";
 import LibrarianSidebar from "./sideNav";
 import LibrarianHeader from "./header";
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const AllLentItemsRequests = () => {
   const dispatch = useDispatch();
@@ -20,6 +24,7 @@ const AllLentItemsRequests = () => {
   const [selectedBook, setSelectedBook] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [search, setSearch] = useState(""); // <-- search state
 
   const alert = useAlert();
 
@@ -49,14 +54,58 @@ const AllLentItemsRequests = () => {
         (i) => new Date(i.createdAt) <= new Date(endDate)
       );
     }
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(
+        (i) =>
+          (i?.name && i.name.toLowerCase().includes(searchLower)) ||
+          (i?.item?.title && i.item.title.toLowerCase().includes(searchLower)) ||
+          (i?.borrower?.role && i.borrower.role.toLowerCase().includes(searchLower)) ||
+          (i?.item?.file?.url && i.item.file.url.toLowerCase().includes(searchLower))
+      );
+    }
 
     setFilteredItems(filtered);
-  }, [lentItems, selectedBook, startDate, endDate]);
+  }, [lentItems, selectedBook, startDate, endDate, search]);
+
+  // Donut chart data
+  const statusCounts = {
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+    unknown: 0,
+  };
+
+  (filteredItems || []).forEach((item) => {
+    const status = (item.status || "unknown").toLowerCase();
+    if (status === "approved") statusCounts.approved += 1;
+    else if (status === "pending") statusCounts.pending += 1;
+    else if (status === "rejected") statusCounts.rejected += 1;
+    else statusCounts.unknown += 1;
+  });
+
+  const donutData = {
+    labels: ['Approved', 'Pending', 'Rejected', 'Unknown'],
+    datasets: [
+      {
+        label: 'Requests',
+        data: [
+          statusCounts.approved,
+          statusCounts.pending,
+          statusCounts.rejected,
+          statusCounts.unknown,
+        ],
+        backgroundColor: ['#4ade80', '#facc15', '#f87171', '#94a3b8'],
+        borderWidth: 1,
+      },
+    ],
+  };
 
   const clearFilters = () => {
     setSelectedBook("");
     setStartDate("");
     setEndDate("");
+    setSearch("");
   };
 
   const uniqueBookTitles = [
@@ -81,6 +130,14 @@ const AllLentItemsRequests = () => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-4 py-4 bg-white">
+          {/* Donut Chart */}
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <h2 className="mb-4 text-xl font-semibold">Lending Requests Status Overview</h2>
+            <div className="max-w-xs mx-auto">
+              <Doughnut data={donutData} />
+            </div>
+          </div>
+
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-4 items-end">
             <div>
@@ -115,6 +172,17 @@ const AllLentItemsRequests = () => {
                   </option>
                 ))}
               </select>
+            </div>
+            {/* Search Bar */}
+            <div className="relative">
+              <label className="block mb-1">Search</label>
+              <input
+                type="text"
+                placeholder="Search Requests..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border rounded px-2 py-1 pl-2"
+              />
             </div>
             <button
               onClick={clearFilters}
@@ -186,25 +254,24 @@ const AllLentItemsRequests = () => {
                           }`}
                         >
                           <button
-  onClick={async () => {
-    await dispatch(changeLendItemsRequestStatus(i._id, "approved"));
-    dispatch(getAllLendItemsRequests());
-  }}
-  className="bg-green-600 p-1 rounded text-white"
->
-  Approve
-</button>
+                            onClick={async () => {
+                              await dispatch(changeLendItemsRequestStatus(i._id, "approved"));
+                              dispatch(getAllLendItemsRequests());
+                            }}
+                            className="bg-green-600 p-1 rounded text-white"
+                          >
+                            Approve
+                          </button>
 
-<button
-  onClick={async () => {
-    await dispatch(changeLendItemsRequestStatus(i._id, "rejected"));
-    dispatch(getAllLendItemsRequests());
-  }}
-  className="bg-red-600 p-1 rounded text-white"
->
-  Decline
-</button>
-
+                          <button
+                            onClick={async () => {
+                              await dispatch(changeLendItemsRequestStatus(i._id, "rejected"));
+                              dispatch(getAllLendItemsRequests());
+                            }}
+                            className="bg-red-600 p-1 rounded text-white"
+                          >
+                            Decline
+                          </button>
                         </div>
                       </td>
                     </tr>

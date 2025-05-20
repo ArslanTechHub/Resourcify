@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { assets } from '../../assets'
 import { useDispatch, useSelector } from 'react-redux'
-import { login, register } from '../../redux/actions/user'
+import { register, clearMessages } from '../../redux/actions/user'
 import { useState, useEffect } from 'react'
 import Select from 'react-select'
 import { styles } from '../../utils/selectStyles'
@@ -15,23 +15,28 @@ const Register = () => {
     const [email, setEmail] = useState('')
     const [gender, setGender] = useState('')
     const [password, setPassword] = useState('')
-    const [isNumericId, setIsNumericId] = useState(false) // Track if it's a numeric ID
-    
+    const [isNumericId, setIsNumericId] = useState(false)
+    const [showVerificationMsg, setShowVerificationMsg] = useState(false)
+
     const dispatch = useDispatch()
     const alert = useAlert()
     const { error, message } = useSelector((state) => state.user)
 
     useEffect(() => {
-        alert(message, error, '/login')
-    }, [message, error])
-    
+        if (message) {
+            setShowVerificationMsg(true)
+            dispatch(clearMessages())
+        }
+        if (error) {
+            alert(message, error, '/login')
+            dispatch(clearMessages())
+        }
+    }, [message, error, alert, dispatch])
+
     const handleRollNoChange = (e) => {
         const value = e.target.value.trim();
-        
-        // Check if input is numeric only
         const isNumeric = /^\d+$/.test(value);
         setIsNumericId(isNumeric);
-        
         setRollNo(value);
     }
 
@@ -44,109 +49,123 @@ const Register = () => {
         <section className="w-full min-h-screen">
             <div className="row w-full h-full flex justify-between items-center gap-[64px]">
                 <div className="form-col w-[30%] h-full flex items-center">
-                    <form
-                        onSubmit={submitHandler}
-                        className="flex flex-col gap-[8px] w-full"
-                    >
-                        <div>
-                            <h2 className="text-4xl font-clemente-regular">
-                                Create Account
+                    {showVerificationMsg ? (
+                        <div className="flex flex-col gap-4 w-full items-center justify-center">
+                            <h2 className="text-3xl font-semibold text-green-600 text-center">
+                                Account Created!
                             </h2>
-                            <p className="text-left !text-[16px]">
-                                Enter Your Email and Password to Login
+                            <p className="text-center text-lg">
+                                Please check your email and click the verification link to activate your account.
                             </p>
-                        </div>
-
-                        <label>
-                            <span className="input-label mb-[4px]">Role</span>
-                            <Select
-                                value={role}
-                                onChange={setRole}
-                                placeholder="Choose Roles"
-                                options={roleOptions}
-                                styles={styles}
-                            />
-                        </label>
-
-                        <label>
-                            <span className="input-label mb-[4px]">Name</span>
-                            <input
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                type="text"
-                                placeholder="Enter Your Name"
-                            />
-                        </label>
-
-                        <label
-                            className={
-                                role.value === 'student' ? 'visible' : 'hidden'
-                            }
-                        >
-                            <span className="input-label mb-[4px]">
-                                Roll No / Student ID
-                            </span>
-                            <input
-                                value={rollNo}
-                                onChange={handleRollNoChange}
-                                className=""
-                                type="text"
-                                placeholder="Enter traditional format (fa22-bse-073) or numeric ID"
-                                maxLength={50}
-                            />
-                            <small className="block mt-1 text-gray-500">
-                                You can use traditional format (fa22-bse-073) or simple numeric ID (12345)
-                            </small>
-                        </label>
-
-                        <label>
-                            <span className="input-label mb-[4px]">Email</span>
-                            <input
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className=""
-                                type="text"
-                                placeholder="Enter Your Email"
-                                maxLength={50} // Increase length to accommodate email addresses
-                            />
-                        </label>
-
-                        <label>
-                            <span className="input-label mb-[4px]">Gender</span>
-                            <Select
-                                value={gender}
-                                onChange={setGender}
-                                placeholder="Choose Gender"
-                                options={genderOptions}
-                                styles={styles}
-                            />
-                        </label>
-
-                        <label>
-                            <span className="input-label mb-[4px]">
-                                Password
-                            </span>
-                            <input
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                type="password"
-                                placeholder="Enter Your Password"
-                            />
-                        </label>
-
-                        <button className="primary-btn !w-full">
-                            Create Account
-                        </button>
-                        <p className="!text-[16px] text-center">
-                            Already have account?{' '}
-                            <Link
-                                to={`/login`}
-                                className="text-accent font-[600]"
-                            >
-                                Login
+                            <Link to="/login" className="primary-btn !w-full text-center">
+                                Go to Login
                             </Link>
-                        </p>
-                    </form>
+                        </div>
+                    ) : (
+                        <form
+                            onSubmit={submitHandler}
+                            className="flex flex-col gap-[8px] w-full"
+                        >
+                            <div>
+                                <h2 className="text-4xl font-clemente-regular">
+                                    Create Account
+                                </h2>
+                                <p className="text-left !text-[16px]">
+                                    Enter Your Email and Password to Login
+                                </p>
+                            </div>
+
+                            <label>
+                                <span className="input-label mb-[4px]">Role</span>
+                                <Select
+                                    value={role}
+                                    onChange={setRole}
+                                    placeholder="Choose Roles"
+                                    options={roleOptions}
+                                    styles={styles}
+                                />
+                            </label>
+
+                            <label>
+                                <span className="input-label mb-[4px]">Name</span>
+                                <input
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    type="text"
+                                    placeholder="Enter Your Name"
+                                />
+                            </label>
+
+                            <label
+                                className={
+                                    role.value === 'student' ? 'visible' : 'hidden'
+                                }
+                            >
+                                <span className="input-label mb-[4px]">
+                                    Roll No / Student ID
+                                </span>
+                                <input
+                                    value={rollNo}
+                                    onChange={handleRollNoChange}
+                                    className=""
+                                    type="text"
+                                    placeholder="Enter traditional format (fa22-bse-073) or numeric ID"
+                                    maxLength={50}
+                                />
+                                <small className="block mt-1 text-gray-500">
+                                    You can use traditional format (fa22-bse-073) or simple numeric ID (12345)
+                                </small>
+                            </label>
+
+                            <label>
+                                <span className="input-label mb-[4px]">Email</span>
+                                <input
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className=""
+                                    type="text"
+                                    placeholder="Enter Your Email"
+                                    maxLength={50}
+                                />
+                            </label>
+
+                            <label>
+                                <span className="input-label mb-[4px]">Gender</span>
+                                <Select
+                                    value={gender}
+                                    onChange={setGender}
+                                    placeholder="Choose Gender"
+                                    options={genderOptions}
+                                    styles={styles}
+                                />
+                            </label>
+
+                            <label>
+                                <span className="input-label mb-[4px]">
+                                    Password
+                                </span>
+                                <input
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    type="password"
+                                    placeholder="Enter Your Password"
+                                />
+                            </label>
+
+                            <button className="primary-btn !w-full">
+                                Create Account
+                            </button>
+                            <p className="!text-[16px] text-center">
+                                Already have account?{' '}
+                                <Link
+                                    to={`/login`}
+                                    className="text-accent font-[600]"
+                                >
+                                    Login
+                                </Link>
+                            </p>
+                        </form>
+                    )}
                 </div>
                 <div className="image-col w-[70%] h-full">
                     <img

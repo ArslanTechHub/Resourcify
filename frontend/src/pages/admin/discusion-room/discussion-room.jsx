@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaSearch, FaComment, FaFilter, FaDownload } from 'react-icons/fa';
+import { FaSearch, FaComment, FaFilter, FaDownload, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +24,10 @@ const DiscussionRoomView = () => {
   const [startDateTime, setStartDateTime] = useState('');
   const [endDateTime, setEndDateTime] = useState('');
   const [bookingReason, setBookingReason] = useState('');
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [entries, setEntries] = useState(5);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,6 +105,62 @@ const DiscussionRoomView = () => {
     room.status.toLowerCase().includes(searchLibrary.toLowerCase())
   );
 
+  // Pagination helpers
+  const paginate = (data, page, entries) => {
+    const start = (page - 1) * entries;
+    return data.slice(start, start + entries);
+  };
+
+  // Pagination controls
+  const renderPagination = (page, setPage, entries, setEntries, filteredTotal) => {
+    const totalPages = Math.ceil(filteredTotal / entries) || 1;
+    const canPrev = page > 1;
+    const canNext = page < totalPages;
+    const showingFrom = filteredTotal === 0 ? 0 : (page - 1) * entries + 1;
+    const showingTo = Math.min(page * entries, filteredTotal);
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        {/* Left: Pagination numbers */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => canPrev && setPage(page - 1)}
+            disabled={!canPrev}
+            className={`p-2 rounded ${canPrev ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronLeft />
+          </button>
+          <span className="font-medium">{page}</span>
+          <button
+            onClick={() => canNext && setPage(page + 1)}
+            disabled={!canNext}
+            className={`p-2 rounded ${canNext ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+        {/* Right: Showing entries and dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            Showing {showingFrom} to {showingTo} of {filteredTotal} entries
+          </span>
+          <select
+            value={entries}
+            onChange={e => {
+              setEntries(Number(e.target.value));
+              setPage(1);
+            }}
+            className="ml-2 border rounded px-2 py-1 text-sm"
+          >
+            {[5, 10, 20, 50].map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
   const statusCounts = {
     available: 0,
     pending: 0,
@@ -162,7 +222,10 @@ const DiscussionRoomView = () => {
                       type="text"
                       placeholder="Search rooms..."
                       value={searchLibrary}
-                      onChange={(e) => setSearchLibrary(e.target.value)}
+                      onChange={(e) => {
+                        setSearchLibrary(e.target.value);
+                        setPage(1);
+                      }}
                       className="py-2 pl-10 pr-4 border rounded-md w-72"
                     />
                     <FaSearch className="absolute text-gray-400 top-3 left-3" />
@@ -170,9 +233,6 @@ const DiscussionRoomView = () => {
                   <div className="flex items-center gap-4">
                     <button className="flex items-center px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
                       <FaFilter className="mr-2" /> Filter
-                    </button>
-                    <button className="flex items-center px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                      <FaDownload className="mr-2" /> Export
                     </button>
                   </div>
                 </div>
@@ -190,28 +250,50 @@ const DiscussionRoomView = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {filteredRooms.map((room, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2">{room.date}</td>
-                          <td className="px-4 py-2">{room.name}</td>
-                          <td className="px-4 py-2">
-                            {room.availabilityHours.start} - {room.availabilityHours.end}
-                          </td>
-                          <td className="px-4 py-2">{room.capacity}</td>
-                          <td className="px-4 py-2">{room.status}</td>
-                          <td className="px-4 py-2">
-                            <button
-                              onClick={() => setSelectedRoom(room) || setIsDialogOpen(true)}
-                              className="px-4 py-2 text-white rounded-lg shadow bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                            >
-                              Book Now
-                            </button>
+                      {paginate(filteredRooms, page, entries).length > 0 ? (
+                        paginate(filteredRooms, page, entries).map((room, index) => (
+                          <tr key={index}>
+                            <td className="px-4 py-2">{room.date}</td>
+                            <td className="px-4 py-2">{room.name}</td>
+                            <td className="px-4 py-2">
+                              {room.availabilityHours.start} - {room.availabilityHours.end}
+                            </td>
+                            <td className="px-4 py-2">{room.capacity}</td>
+                            <td className="px-4 py-2">
+                              <span className={`px-3 py-1 rounded-full text-sm 
+                                ${room.status === 'available' ? 'text-green-700 bg-green-100' :
+                                  room.status === 'pending' ? 'text-yellow-700 bg-yellow-100' :
+                                    room.status === 'rejected' ? 'text-red-700 bg-red-100' : 'text-gray-600 bg-gray-100'}`}>
+                                {room.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2">
+                              <button
+                                onClick={() => setSelectedRoom(room) || setIsDialogOpen(true)}
+                                className="px-4 py-2 text-white rounded-lg shadow bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                              >
+                                Book Now
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                            No rooms found matching your search.
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
+                {renderPagination(
+                  page,
+                  setPage,
+                  entries,
+                  setEntries,
+                  filteredRooms.length
+                )}
               </div>
             </>
           )}

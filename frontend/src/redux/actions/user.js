@@ -89,7 +89,6 @@ export const logout = () => async (dispatch) => {
   }
 };
 
-
 export const getMyRequests = () => async (dispatch) => {
   dispatch({ type: "getMyRequestsRequest" });
 
@@ -100,10 +99,14 @@ export const getMyRequests = () => async (dispatch) => {
     });
 
     console.log("MY REQUESTS:", data);
-    
 
     dispatch({ type: "getMyRequestsSuccess", payload: data });
   } catch (error) {
     dispatch({ type: "getMyRequestsFail", payload: error.response.data.message });
   }
+};
+
+// Add this action to clear messages and errors from Redux state
+export const clearMessages = () => (dispatch) => {
+  dispatch({ type: "clearMessages" });
 };

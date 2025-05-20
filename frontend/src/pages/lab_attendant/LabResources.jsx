@@ -7,7 +7,7 @@ import {
   getLabResourceById,
 } from "../../redux/actions/lab";
 import toast from "react-hot-toast";
-import { FaRegEdit, FaSearch, FaPlus, FaExternalLinkAlt } from "react-icons/fa";
+import { FaRegEdit, FaSearch, FaPlus, FaExternalLinkAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { MdDeleteOutline } from "react-icons/md";
 import { Link } from "react-router-dom";
 import LabAttendentSidebar from "./LabAttendentSideNav";
@@ -30,6 +30,10 @@ const LabResourcesScreen = () => {
     publisher: "",
     size: "",
   });
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [entries, setEntries] = useState(10);
 
   useEffect(() => {
     dispatch(getLabResources());
@@ -112,7 +116,69 @@ const LabResourcesScreen = () => {
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.publisher.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.os.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
+
+  // Pagination helpers
+  const paginate = (data, page, entries) => {
+    const start = (page - 1) * entries;
+    return data.slice(start, start + entries);
+  };
+
+  // Pagination controls
+  const renderPagination = (page, setPage, entries, setEntries, filteredTotal) => {
+    const totalPages = Math.ceil(filteredTotal / entries) || 1;
+    const canPrev = page > 1;
+    const canNext = page < totalPages;
+    const showingFrom = filteredTotal === 0 ? 0 : (page - 1) * entries + 1;
+    const showingTo = Math.min(page * entries, filteredTotal);
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        {/* Left: Pagination numbers */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => canPrev && setPage(page - 1)}
+            disabled={!canPrev}
+            className={`p-2 rounded ${canPrev ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronLeft />
+          </button>
+          <span className="font-medium">{page}</span>
+          <button
+            onClick={() => canNext && setPage(page + 1)}
+            disabled={!canNext}
+            className={`p-2 rounded ${canNext ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+        {/* Right: Showing entries and dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            Showing {showingFrom} to {showingTo} of {filteredTotal} entries
+          </span>
+          <select
+            value={entries}
+            onChange={e => {
+              setEntries(Number(e.target.value));
+              setPage(1);
+            }}
+            className="ml-2 border rounded px-2 py-1 text-sm"
+          >
+            {[5, 10, 20, 50].map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  // Reset page if filteredItems changes and page is out of range
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredItems.length / entries) || 1;
+    if (page > totalPages) setPage(1);
+  }, [filteredItems, entries, page]);
 
   return (
     <section className="flex h-screen bg-gray-50">
@@ -130,7 +196,10 @@ const LabResourcesScreen = () => {
                   placeholder="Search resources..."
                   className="w-64 py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
                 />
                 <FaSearch className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
               </div>
@@ -172,13 +241,13 @@ const LabResourcesScreen = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems?.length > 0 ? (
-                    filteredItems.map((i, index) => (
+                  {paginate(filteredItems, page, entries).length > 0 ? (
+                    paginate(filteredItems, page, entries).map((i, index) => (
                       <tr 
                         key={i._id} 
                         className="transition-colors border-b border-gray-200 hover:bg-gray-50"
                       >
-                        <td className="px-2 py-3 text-gray-700">{index + 1}</td>
+                        <td className="px-2 py-3 text-gray-700">{(page - 1) * entries + index + 1}</td>
                         <td className="px-2 py-3">
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0 w-8 h-8 overflow-hidden bg-gray-100 border border-gray-200 rounded">
@@ -269,32 +338,44 @@ const LabResourcesScreen = () => {
                 </tbody>
               </table>
             </div>
+            {renderPagination(
+              page,
+              setPage,
+              entries,
+              setEntries,
+              filteredItems.length
+            )}
           </div>
         </div>
 
-        {/* Edit Modal */}
+        {/* Edit Modal with Scrollbar */}
         {isEditOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="w-full max-w-lg p-6 bg-white rounded-lg shadow-xl animate-fade-in">
               <h2 className="mb-4 text-xl font-bold text-gray-800">Edit Resource</h2>
               <form onSubmit={handleEditSubmit} className="space-y-4">
-                {Object.entries(formData).map(([key, value]) => (
-                  <div key={key} className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                      {key}
-                    </label>
-                    <input
-                      type="text"
-                      name={key}
-                      placeholder={`Enter ${key}`}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={value}
-                      onChange={(e) =>
-                        setFormData({ ...formData, [key]: e.target.value })
-                      }
-                    />
-                  </div>
-                ))}
+                <div
+                  className="max-h-72 overflow-y-auto pr-2"
+                  style={{ scrollbarWidth: "thin" }}
+                >
+                  {Object.entries(formData).map(([key, value]) => (
+                    <div key={key} className="space-y-1 mb-3">
+                      <label className="block text-sm font-medium text-gray-700 capitalize">
+                        {key}
+                      </label>
+                      <input
+                        type="text"
+                        name={key}
+                        placeholder={`Enter ${key}`}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={value}
+                        onChange={(e) =>
+                          setFormData({ ...formData, [key]: e.target.value })
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
                 <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-200">
                   <button
                     type="button"

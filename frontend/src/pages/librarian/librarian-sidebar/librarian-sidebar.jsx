@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteLibraryItem, getAllLibraryItems, updateLibraryItem, createLibraryItem } from '../../../redux/actions/library';
-import { FaRegEdit, FaBook, FaDoorOpen, FaUsers, FaBoxOpen, FaChartBar, FaExclamationTriangle, FaCheckCircle, FaSearch } from 'react-icons/fa';
-import { MdDeleteOutline, MdLibraryBooks, MdEventAvailable } from 'react-icons/md';
+import { FaBook, FaDoorOpen, FaUsers, FaBoxOpen, FaCheckCircle, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { MdLibraryBooks, MdEventAvailable } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import LibrarianHeader from '../header';
 import LibrarianSidebar from '../sideNav';
@@ -20,7 +20,7 @@ const LibraryItems = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [showAdd, setShowAdd] = useState(false); // State for showing add form
+  const [showAdd, setShowAdd] = useState(false);
   const [editData, setEditData] = useState({
     title: '',
     subtitle: '',
@@ -45,6 +45,10 @@ const LibraryItems = () => {
     copyright: '',
   });
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [entries, setEntries] = useState(10);
+
   useEffect(() => {
     dispatch(getAllLibraryItems());
   }, [dispatch]);
@@ -61,21 +65,15 @@ const LibraryItems = () => {
 
   const confirmDelete = async () => {
     try {
-      // Dispatch the delete action
       await dispatch(deleteLibraryItem(selectedItemId));
-  
-      // Close the confirmation modal
       setShowConfirm(false);
-  
-      // Refresh updated data after delete
-      await dispatch(getAllLibraryItems()); 
-  
+      await dispatch(getAllLibraryItems());
       toast.success("Library item deleted successfully");
     } catch (error) {
       toast.error("Failed to delete library item");
     }
   };
-  
+
   const openEditDialog = (item) => {
     setEditData(item);
     setShowEdit(true);
@@ -92,7 +90,7 @@ const LibraryItems = () => {
   const submitEdit = async () => {
     try {
       await dispatch(updateLibraryItem(editData._id, editData));
-      await dispatch(getAllLibraryItems()); // refresh updated data
+      await dispatch(getAllLibraryItems());
       toast.success("Library item updated successfully");
       setShowEdit(false);
     } catch (error) {
@@ -103,7 +101,7 @@ const LibraryItems = () => {
   const submitAdd = async () => {
     try {
       await dispatch(createLibraryItem(newItem));
-      await dispatch(getAllLibraryItems()); // refresh updated data
+      await dispatch(getAllLibraryItems());
       toast.success("Library item added successfully");
       setShowAdd(false);
       setNewItem({
@@ -122,18 +120,15 @@ const LibraryItems = () => {
     }
   };
 
-  // Data analytics for dashboard
   const typeCounts = items?.reduce((acc, item) => {
     acc[item.type] = (acc[item.type] || 0) + 1;
     return acc;
   }, {});
 
-  // Calculate recently added items (last 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const recentItems = items?.filter(item => new Date(item.createdAt) > thirtyDaysAgo) || [];
 
-  // Dashboard stats
   const stats = [
     {
       title: "Total Items",
@@ -161,7 +156,6 @@ const LibraryItems = () => {
     }
   ];
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -181,20 +175,78 @@ const LibraryItems = () => {
     }
   };
 
-  // Handle search and filtering
   const filteredItems = items?.filter(item => {
     const matchesSearch = 
       item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.subtitle?.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesType = filterType === "all" || item.type === filterType;
-    
     return matchesSearch && matchesType;
-  });
+  }) || [];
 
-  // Get unique item types for filter
   const itemTypes = [...new Set(items?.map(item => item.type))];
+
+  // Pagination helpers
+  const paginate = (data, page, entries) => {
+    const start = (page - 1) * entries;
+    return data.slice(start, start + entries);
+  };
+
+  // Pagination controls
+  const renderPagination = (page, setPage, entries, setEntries, filteredTotal) => {
+    const totalPages = Math.ceil(filteredTotal / entries) || 1;
+    const canPrev = page > 1;
+    const canNext = page < totalPages;
+    const showingFrom = filteredTotal === 0 ? 0 : (page - 1) * entries + 1;
+    const showingTo = Math.min(page * entries, filteredTotal);
+
+    return (
+      <div className="flex items-center justify-between mt-4">
+        {/* Left: Pagination numbers */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => canPrev && setPage(page - 1)}
+            disabled={!canPrev}
+            className={`p-2 rounded ${canPrev ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronLeft />
+          </button>
+          <span className="font-medium">{page}</span>
+          <button
+            onClick={() => canNext && setPage(page + 1)}
+            disabled={!canNext}
+            className={`p-2 rounded ${canNext ? "hover:bg-gray-200" : "opacity-50 cursor-not-allowed"}`}
+          >
+            <FaChevronRight />
+          </button>
+        </div>
+        {/* Right: Showing entries and dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">
+            Showing {showingFrom} to {showingTo} of {filteredTotal} entries
+          </span>
+          <select
+            value={entries}
+            onChange={e => {
+              setEntries(Number(e.target.value));
+              setPage(1);
+            }}
+            className="ml-2 border rounded px-2 py-1 text-sm"
+          >
+            {[5, 10, 20, 50].map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  // Reset page if filteredItems changes and page is out of range
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredItems.length / entries) || 1;
+    if (page > totalPages) setPage(1);
+  }, [filteredItems, entries, page]);
 
   return loading ? (
     <div className="flex items-center justify-center h-screen">
@@ -308,7 +360,10 @@ const LibraryItems = () => {
                       placeholder="Search items..."
                       className="w-full px-4 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(1);
+                      }}
                     />
                     <FaSearch className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2" />
                   </div>
@@ -316,7 +371,10 @@ const LibraryItems = () => {
                   <select
                     className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg md:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
+                    onChange={(e) => {
+                      setFilterType(e.target.value);
+                      setPage(1);
+                    }}
                   >
                     <option value="all">All Types</option>
                     {itemTypes.map((type, index) => (
@@ -348,10 +406,10 @@ const LibraryItems = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredItems && filteredItems.length > 0 ? (
-                    filteredItems.map((i, index) => (
+                  {paginate(filteredItems, page, entries).length > 0 ? (
+                    paginate(filteredItems, page, entries).map((i, index) => (
                       <tr key={i._id} className="transition-colors bg-white hover:bg-gray-50">
-                        <td className="px-4 py-3">{index + 1}</td>
+                        <td className="px-4 py-3">{(page - 1) * entries + index + 1}</td>
                         <td className="px-4 py-3 font-medium text-gray-800">
                           <div className="flex flex-col">
                             <span>{i.title}</span>
@@ -370,17 +428,19 @@ const LibraryItems = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={() => openEditDialog(i)}
-                              className="p-1 text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200"
+                              className="px-4 py-1 text-sm font-normal text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
                               title="Edit"
+                              style={{ fontWeight: 'normal' }}
                             >
-                              <FaRegEdit />
+                              Edit
                             </button>
                             <button
                               onClick={() => openConfirmDialog(i._id)}
-                              className="p-1 text-red-600 bg-red-100 rounded-md hover:bg-red-200"
+                              className="px-4 py-1 text-sm font-normal text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
                               title="Delete"
+                              style={{ fontWeight: 'normal' }}
                             >
-                              <MdDeleteOutline />
+                              Delete
                             </button>
                           </div>
                         </td>
@@ -396,6 +456,13 @@ const LibraryItems = () => {
                 </tbody>
               </table>
             </div>
+            {renderPagination(
+              page,
+              setPage,
+              entries,
+              setEntries,
+              filteredItems.length
+            )}
           </motion.div>
         </main>
       </div>
@@ -415,7 +482,6 @@ const LibraryItems = () => {
             </div>
             
             <form className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Add form fields here */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Title</label>
                 <input
@@ -534,7 +600,6 @@ const LibraryItems = () => {
         </div>
       )}
 
-      {/* Edit Library Item Modal - Similar to Add Modal */}
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl mx-auto my-8 max-h-[90vh] overflow-y-auto">
@@ -549,7 +614,6 @@ const LibraryItems = () => {
             </div>
             
             <form className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Similar fields as Add form, but with editData */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Title</label>
                 <input
@@ -668,7 +732,6 @@ const LibraryItems = () => {
         </div>
       )}
 
-      {/* Confirmation Dialog */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="max-w-md p-6 mx-auto bg-white rounded-lg shadow-lg">

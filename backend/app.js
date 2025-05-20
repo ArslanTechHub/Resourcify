@@ -1,15 +1,13 @@
 import express from "express";
-import { config } from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ErrorMiddleware } from "./middlewares/Error.js";
 
 const app = express();
-config({
-  path: "./config/config.env",
-});
-app.use((req, res, next) => {//https://yanfeng-client.onrender.com
-  res.setHeader('Access-Control-Allow-Origin', 'https://resourcify-chi.vercel.app');
+
+app.use((req, res, next) => {
+  // res.setHeader('Access-Control-Allow-Origin', 'https://resourcify-chi.vercel.app');
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');

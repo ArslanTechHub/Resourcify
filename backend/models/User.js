@@ -57,6 +57,15 @@ const schema = new mongoose.Schema({
         },
     },
 
+    // New fields for email verification
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    emailVerificationToken: {
+        type: String,
+    },
+
     createdAt: {
         type: Date,
         default: Date.now(),

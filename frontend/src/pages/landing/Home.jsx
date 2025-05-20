@@ -85,6 +85,34 @@ const Home = () => {
         return () => clearInterval(interval);
     }, []);
 
+    // --- SWAP: Library Management and Lab Resources images ---
+    // image1 <-> image2
+    const featuresData = [
+        {
+            // Lab Resources (was Library Management)
+            icon: <FiLayers className="text-4xl text-indigo-600" />,
+            title: "Lab Resources",
+            description: "Streamline lab equipment and resource management for enhanced learning experiences",
+            image: assets.image1, // SWAPPED: was image2, now image1
+            link: "/lab-resources"
+        },
+        {
+            // Library Management (was Lab Resources)
+            icon: <FiBook className="text-4xl text-blue-600" />,
+            title: "Library Management",
+            description: "Access and manage books, journals, and other library resources with an intuitive interface",
+            image: assets.image2, // SWAPPED: was image1, now image2
+            link: "/library"
+        },
+        {
+            icon: <FiUsers className="text-4xl text-violet-600" />,
+            title: "Discussion Rooms",
+            description: "Easily book and manage discussion rooms for collaborative study sessions",
+            image: assets.image3,
+            link: "/discussion-rooms"
+        }
+    ];
+
     return (
         <div className="min-h-screen">
             {/* Hero Section - Enhanced Design with Interactive Elements */}
@@ -299,29 +327,7 @@ const Home = () => {
                                 className="flex transition-transform duration-500 ease-in-out slider-track"
                                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                             >
-                                {[
-                                    {
-                                        icon: <FiBook className="text-4xl text-blue-600" />,
-                                        title: "Library Management",
-                                        description: "Access and manage books, journals, and other library resources with an intuitive interface",
-                                        image: assets.image1,
-                                        link: "/library"
-                                    },
-                                    {
-                                        icon: <FiLayers className="text-4xl text-indigo-600" />,
-                                        title: "Lab Resources",
-                                        description: "Streamline lab equipment and resource management for enhanced learning experiences",
-                                        image: assets.image2,
-                                        link: "/lab-resources"
-                                    },
-                                    {
-                                        icon: <FiUsers className="text-4xl text-violet-600" />,
-                                        title: "Discussion Rooms",
-                                        description: "Easily book and manage discussion rooms for collaborative study sessions",
-                                        image: assets.image3,
-                                        link: "/discussion-rooms"
-                                    }
-                                ].map((feature, index) => (
+                                {featuresData.map((feature, index) => (
                                     <motion.div 
                                         key={index}
                                         variants={itemVariants}
@@ -349,17 +355,17 @@ const Home = () => {
                                                 <div className="flex-1 p-6 transition-transform bg-white shadow-lg rounded-xl hover:shadow-xl hover:-translate-y-1">
                                                     <h4 className="mb-2 text-lg font-semibold text-gray-900">Key Features</h4>
                                                     <p className="text-gray-700">
-                                                        {index === 0 && "Digital catalogs, reservations, lending history, and personalized recommendations."}
-                                                        {index === 1 && "Equipment booking, usage tutorials, maintenance schedules, and resource tracking."}
-                                                        {index === 2 && "Room availability, advanced booking, capacity information, and multimedia support."}
+                                                        {feature.title === "Library Management" && "Digital catalogs, reservations, lending history, and personalized recommendations."}
+                                                        {feature.title === "Lab Resources" && "Equipment booking, usage tutorials, maintenance schedules, and resource tracking."}
+                                                        {feature.title === "Discussion Rooms" && "Room availability, advanced booking, capacity information, and multimedia support."}
                                                     </p>
                                                 </div>
                                                 <div className="flex-1 p-6 transition-transform bg-white shadow-lg rounded-xl hover:shadow-xl hover:-translate-y-1">
                                                     <h4 className="mb-2 text-lg font-semibold text-gray-900">Benefits</h4>
                                                     <p className="text-gray-700">
-                                                        {index === 0 && "Quick access to academic resources, efficient search, and streamlined borrowing process."}
-                                                        {index === 1 && "Optimized resource allocation, reduced wait times, and enhanced learning experiences."}
-                                                        {index === 2 && "Seamless collaboration, dedicated study spaces, and improved group productivity."}
+                                                        {feature.title === "Library Management" && "Quick access to academic resources, efficient search, and streamlined borrowing process."}
+                                                        {feature.title === "Lab Resources" && "Optimized resource allocation, reduced wait times, and enhanced learning experiences."}
+                                                        {feature.title === "Discussion Rooms" && "Seamless collaboration, dedicated study spaces, and improved group productivity."}
                                                     </p>
                                                 </div>
                                             </div>
@@ -468,17 +474,17 @@ const Home = () => {
                         {[
                             {
                                 quote: "Resourcify has transformed how I access library resources. The interface is intuitive and I can find what I need quickly.",
-                                name: "Sophia Chen",
-                                role: "Graduate Student"
+                                name: "Daniya Qaiser",
+                                role: "Undergraduate Student"
                             },
                             {
                                 quote: "Managing lab resources has never been easier. The booking system is seamless and saves us so much time.",
-                                name: "Dr. James Wilson",
-                                role: "Professor of Chemistry"
+                                name: "Samra Siddiqui",
+                                role: "Lecturer of Computer Science"
                             },
                             {
                                 quote: "The discussion room reservation system is fantastic. I can always find a quiet place to study with my peers.",
-                                name: "Michael Rodriguez",
+                                name: "Zain Asgher Malik",
                                 role: "Undergraduate Student"
                             }
                         ].map((testimonial, index) => (

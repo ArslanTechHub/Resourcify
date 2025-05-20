@@ -25,6 +25,7 @@ import LibraryItems from "../pages/librarian/librarian-sidebar/librarian-sidebar
 import LibrarianProfileScreen from "../pages/librarian/Profile/profile";
 import UpdateLibraryItem from "../pages/librarian/UpdateLibraryItem";
 import Profile from "../pages/other/Profile";
+import VerifyEmail from "../pages/auth/VerifyEmail"; // <-- Add this import
 
 export const routes = [
   {
@@ -110,6 +111,12 @@ export const authRoutes = [
     title: "Forgot Password",
     path: "/forgotpassword",
     element: ForgotPassword,
+  },
+
+  {
+    title: "Verify Email",
+    path: "/verify-email",
+    element: VerifyEmail,
   },
 ];
 

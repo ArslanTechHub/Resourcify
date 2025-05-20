@@ -113,16 +113,7 @@ const Sidebar = () => {
       <div className="pt-4 mt-auto border-t border-gray-100">
         <div className="px-4 py-3 mx-2 rounded-lg bg-gray-50">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              {user?.avatar?.url ? (
-                <img className="object-cover w-10 h-10 border-2 border-white rounded-full shadow-sm" src={user.avatar.url} alt={user?.name || 'User'} />
-              ) : (
-                <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full shadow-sm bg-gradient-to-r from-blue-400 to-indigo-500">
-                  {user?.name?.charAt(0) || 'U'}
-                </div>
-              )}
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
-            </div>
+           
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-700 truncate">
                 {user?.name || 'Guest'}

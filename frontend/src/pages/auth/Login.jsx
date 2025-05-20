@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { assets } from "../../assets";
-import { useDispatch } from "react-redux";
-import { login } from "../../redux/actions/user";
-import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { login, clearMessages } from "../../redux/actions/user";
+import { useState, useEffect } from "react";
+import { useAlert } from "../../utils/alert";
 
 const Login = () => {
   const [identifier, setIdentifier] = useState(""); // Changed from rollNo to identifier
@@ -10,6 +11,30 @@ const Login = () => {
   const [isNumericId, setIsNumericId] = useState(false); // Track if it's a numeric ID
 
   const dispatch = useDispatch();
+  const alert = useAlert();
+  const { error, message } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    if (error) {
+      // Show a special message if the error is about unverified email
+      if (
+        error === "Please verify your email before logging in." ||
+        (typeof error === "string" && error.toLowerCase().includes("verify your email"))
+      ) {
+        alert(
+          "Your account is not verified. Please check your email and click the verification link before logging in.",
+          "error"
+        );
+      } else {
+        alert(message, error, "/login");
+      }
+      dispatch(clearMessages());
+    }
+    if (message) {
+      alert(message, "success");
+      dispatch(clearMessages());
+    }
+  }, [error, message, alert, dispatch]);
 
   const formatRollNo = (value) => {
     // If it's marked as a numeric ID, don't format it
@@ -40,11 +65,11 @@ const Login = () => {
 
   const handleIdentifierChange = (e) => {
     const value = e.target.value.trim();
-    
+
     // Check if input is numeric only
     const isNumeric = /^\d+$/.test(value);
     setIsNumericId(isNumeric);
-    
+
     if (isNumeric) {
       // If it's numeric, don't format
       setIdentifier(value);

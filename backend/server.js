@@ -1,9 +1,17 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "./config/config.env" });
+
+// Debug: Log environment variables after loading dotenv
+console.log("SERVER EMAIL_USER:", process.env.EMAIL_USER);
+console.log("SERVER EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded" : "Not Loaded");
+
 import app from "./app.js";
 import { connectDB } from "./config/database.js";
 import cloudinary from "cloudinary";
 import { Room } from "./models/Room.js";
 import { Booking } from "./models/Booking.js";
 import cron from "node-cron";
+
 connectDB();
 
 await cloudinary.v2.config({

@@ -79,5 +79,11 @@ export const userReducer = createReducer(
         clearError: (state) => {
             state.error = null
         },
+
+        // Add this reducer to clear both message and error at once
+        clearMessages: (state) => {
+            state.message = null
+            state.error = null
+        },
     }
 )

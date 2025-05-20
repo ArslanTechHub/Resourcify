@@ -13,26 +13,12 @@ import {
   FaClipboardList,
   FaCalendarCheck,
   FaPlusCircle,
-  FaLayerGroup
+  FaLayerGroup,
+  FaChevronRight
 } from 'react-icons/fa';
 import { assets } from '../../assets';
 import { logout } from '../../redux/actions/user';
-
-const NavItem = ({ to, icon, label, active }) => (
-  <Link
-    to={to}
-    className={`flex items-center gap-3 px-4 py-3 mb-1 transition-colors rounded-lg ${
-      active
-        ? 'text-white font-medium bg-[#003b7e]'
-        : 'text-gray-600 hover:bg-gray-100'
-    }`}
-  >
-    <span className={`text-lg ${active ? 'text-white' : 'text-gray-500'}`}>
-      {icon}
-    </span>
-    <span>{label}</span>
-  </Link>
-);
+import { motion } from 'framer-motion';
 
 const LibrarianSidebar = () => {
   const location = useLocation();
@@ -46,117 +32,133 @@ const LibrarianSidebar = () => {
   };
 
   // Navigation items grouped by category
-  const navItems = [
+  const menuItems = [
     {
-      category: 'Dashboard',
-      items: [
-        {
-          path: '/librarian-view',
-          label: 'Overview',
-          icon: <FaChartBar />
-        }
-      ]
+      path: '/librarian-view',
+      name: 'Overview',
+      icon: <FaChartBar />
     },
     {
-      category: 'Library',
-      items: [
-        {
-          path: '/librarian-view',
-          label: 'Library Items',
-          icon: <FaBook />
-        },
-        {
-          path: '/librarian/add',
-          label: 'Add Item',
-          icon: <FaPlusCircle />
-        },
-        {
-          path: '/librarian/requests',
-          label: 'Lent Requests',
-          icon: <FaClipboardList />
-        }
-      ]
+      path: '/librarian-view',
+      name: 'Library Items',
+      icon: <FaBook />
     },
     {
-      category: 'Discussion Rooms',
-      items: [
-        {
-          path: '/librarian/rooms',
-          label: 'All Rooms',
-          icon: <FaComments />
-        },
-        {
-          path: '/librarian/room/add',
-          label: 'Add Room',
-          icon: <FaPlusCircle />
-        },
-        {
-          path: '/librarian/bookings',
-          label: 'Room Bookings',
-          icon: <FaCalendarCheck />
-        }
-      ]
+      path: '/librarian/add',
+      name: 'Add Item',
+      icon: <FaPlusCircle />
     },
     {
-      category: 'Account',
-      items: [
-        {
-          path: '/librarian/profile',
-          label: 'Profile',
-          icon: <FaUser />
-        }
-      ]
+      path: '/librarian/requests',
+      name: 'Lent Requests',
+      icon: <FaClipboardList />
+    },
+    {
+      path: '/librarian/rooms',
+      name: 'Discussion Rooms',
+      icon: <FaComments />
+    },
+    {
+      path: '/librarian/room/add',
+      name: 'Add Room',
+      icon: <FaPlusCircle />
+    },
+    {
+      path: '/librarian/bookings',
+      name: 'Room Bookings',
+      icon: <FaCalendarCheck />
     }
   ];
 
+  // Animation variants
+  const sidebarVariants = {
+    hidden: { x: -250 },
+    visible: { 
+      x: 0,
+      transition: { 
+        type: 'spring',
+        stiffness: 300,
+        damping: 30 
+      } 
+    }
+  };
+
   return (
-    <aside className="fixed top-0 left-0 w-64 h-full pt-[80px] bg-white border-r shadow-sm flex flex-col">
-      {/* User Profile Summary */}
-      <div className="p-4 mb-4 border-b">
-        <div className="flex items-center gap-3 mb-3">
-          <img 
-            src={user?.avatar?.url || assets.logo} 
-            alt="User" 
-            className="object-cover w-10 h-10 bg-gray-100 rounded-full"
-          />
-          <div className="overflow-hidden">
-            <h3 className="font-medium text-gray-800 truncate">{user?.name || 'Librarian'}</h3>
-            <p className="text-xs text-gray-500 truncate">{user?.email || 'librarian@example.com'}</p>
+    <motion.aside 
+      initial="hidden"
+      animate="visible"
+      variants={sidebarVariants}
+      className="bg-white fixed top-0 left-0 w-[250px] h-full shadow-lg pt-[80px] border-r border-gray-100 flex flex-col justify-between z-30"
+    >
+      {/* Navigation Section */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <nav className="px-4">
+          <div className="px-2 mb-8">
+            <h2 className="text-xs font-medium tracking-wider text-gray-400 uppercase">Library Management</h2>
+          </div>
+          <ul className="space-y-2 text-sm font-medium text-gray-700">
+            {menuItems.map((item, index) => (
+              <motion.li
+                key={index}
+                whileHover={{ x: 4 }}
+                transition={{ type: 'spring', stiffness: 500 }}
+              >
+                <Link
+                  to={item.path}
+                  className={`flex items-center gap-3 py-3 px-3 rounded-lg transition-all ${
+                    location.pathname === item.path
+                      ? 'text-white bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className={`text-lg ${location.pathname === item.path ? 'text-white' : 'text-blue-500'}`}>
+                    {item.icon}
+                  </span>
+                  <span>{item.name}</span>
+                  {location.pathname === item.path && (
+                    <FaChevronRight className="ml-auto text-xs text-white" />
+                  )}
+                </Link>
+              </motion.li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      {/* Profile + Logout Section */}
+      <div className="pt-4 mt-auto border-t border-gray-100">
+        <div className="px-4 py-3 mx-2 rounded-lg bg-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              {user?.avatar?.url ? (
+                <img className="object-cover w-10 h-10 border-2 border-white rounded-full shadow-sm" src={user.avatar.url} alt={user?.name || 'User'} />
+              ) : (
+                <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full shadow-sm bg-gradient-to-r from-blue-400 to-indigo-500">
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
+              )}
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-700 truncate">
+                {user?.name || 'Librarian'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{user?.email || 'librarian@example.com'}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="p-2 text-gray-400 transition-colors rounded-full hover:text-red-500 hover:bg-red-50"
+            >
+              <FaSignOutAlt size={16} />
+            </button>
           </div>
         </div>
+        <div className="px-6 py-3 text-center">
+          <p className="text-xs text-gray-400">Resourcify v1.0.0</p>
+        </div>
       </div>
-
-      {/* Navigation Groups */}
-      <div className="flex-1 px-3 py-2 overflow-y-auto">
-        {navItems.map((group, groupIndex) => (
-          <div key={groupIndex} className="mb-6">
-            <h3 className="mb-2 ml-4 text-xs font-semibold tracking-wider text-gray-500 uppercase">
-              {group.category}
-            </h3>
-            {group.items.map((item, itemIndex) => (
-              <NavItem
-                key={itemIndex}
-                to={item.path}
-                icon={item.icon}
-                label={item.label}
-                active={location.pathname === item.path}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {/* Logout Button */}
-      <div className="p-4 mt-auto border-t">
-        <button
-          onClick={handleLogout}
-          className="flex items-center w-full gap-3 px-4 py-3 text-left text-red-600 transition-colors rounded-lg hover:bg-red-50"
-        >
-          <FaSignOutAlt />
-          <span>Sign Out</span>
-        </button>
-      </div>
-    </aside>
+    </motion.aside>
   );
 };
 

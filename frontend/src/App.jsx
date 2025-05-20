@@ -29,6 +29,7 @@ import LabResources from "./pages/admin/lab-resources/lab-resources";
 import NotificationScreen from "./pages/admin/notifications/notifications";
 import ProfileScreen from "./pages/admin/profile/profile";
 import UserProfileScreen from "./pages/admin/profile/profile";
+import VerifyEmail from "./pages/auth/VerifyEmail"; // <-- Add this import
 
 const App = () => {
   const dispatch = useDispatch();
@@ -40,7 +41,7 @@ const App = () => {
     error: libraryError,
     message: libraryMessage,
   } = useSelector((state) => state.library);
-  
+
   // Use refs to track if messages have been shown
   const messageShownRef = useRef({});
 
@@ -49,18 +50,20 @@ const App = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    // Check if we've shown this exact message before
-    if (message && !messageShownRef.current[message]) {
+    // Only show the message if it's not the registration success message
+    if (
+      message &&
+      message !== "Account Created Successfully" &&
+      !messageShownRef.current[message]
+    ) {
       toast.success(message);
       dispatch({ type: "clearMessage" });
-      // Mark this message as shown
       messageShownRef.current[message] = true;
     }
 
     if (error && !messageShownRef.current[error]) {
       toast.error(error);
       dispatch({ type: "clearError" });
-      // Mark this error as shown
       messageShownRef.current[error] = true;
     }
   }, [error, message, dispatch]);
@@ -76,11 +79,11 @@ const App = () => {
       <Router>
         {/* Show Header to all users */}
         <Header isAuthenticated={isAuthenticated} user={user} />
-        
+
         {/* Single Toaster instance */}
-        <Toaster 
-          position="top-center" 
-          toastOptions={{ 
+        <Toaster
+          position="top-center"
+          toastOptions={{
             duration: 3000,
             style: {
               fontFamily: "gilroy_medium",
@@ -91,20 +94,23 @@ const App = () => {
             success: {
               style: {
                 background: "#10B981",
-                color: "#fff"
-              }
+                color: "#fff",
+              },
             },
             error: {
               style: {
                 background: "#EF4444",
-                color: "#fff"
-              }
-            }
-          }} 
+                color: "#fff",
+              },
+            },
+          }}
         />
 
         <div className="min-h-screen pt-[80px] lg:pt-[85px]">
           <Routes>
+            {/* Add the verification route here */}
+            <Route path="/verify-email" element={<VerifyEmail />} />
+
             <Route
               path="/me"
               element={

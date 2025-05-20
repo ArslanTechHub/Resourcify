@@ -66,4 +66,4 @@ const DiscussionRoomBooking = () => {
   )
 }
 
-export default DiscussionRoomBooking
+export default DiscussionRoomBooking;

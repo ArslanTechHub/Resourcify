@@ -140,21 +140,12 @@ const Header = ({ isAuthenticated, user }) => {
                   <Link
                     to="/desk"
                     onClick={() => setVisible(false)}
-                    className="flex items-center w-full gap-2 p-2 rounded-md hover:bg-zinc-100"
+                    className=""
                   >
                     <FaChartBar className="text-gray-600" />
                     <span className="font-medium text-gray-800">Dashboard</span>
                   </Link>
                   
-                  <Link
-                    to="/me"
-                    onClick={() => setVisible(false)}
-                    className="flex items-center w-full gap-2 p-2 rounded-md hover:bg-zinc-100"
-                  >
-                    <FaRegUser className="text-gray-600" />
-                    <span className="font-medium text-gray-800">Profile</span>
-                  </Link>
-
                   <button 
                     className="flex items-center w-full gap-2 p-2 text-white rounded-md bg-accent hover:bg-accent/90" 
                     onClick={() => { 

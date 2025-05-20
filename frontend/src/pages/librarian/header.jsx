@@ -46,13 +46,6 @@ const LibrarianHeader = () => {
           
           {visible && (
             <div className="absolute right-0 w-48 py-2 text-gray-800 bg-white rounded-lg shadow-lg top-12">
-              <Link 
-                to="/librarian/profile" 
-                className="flex items-center px-4 py-2 hover:bg-gray-100"
-                onClick={() => setVisible(false)}
-              >
-                <FaUser className="mr-2" /> Profile
-              </Link>
               <button 
                 onClick={() => {
                   setVisible(false);
